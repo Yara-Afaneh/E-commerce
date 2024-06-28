@@ -31,8 +31,6 @@ const categoriesSchema = new Schema({
     toObject:{virtuals:true}
   },
  
-
- 
 );
 categoriesSchema.virtual('subcategory',{
   localField:'_id',

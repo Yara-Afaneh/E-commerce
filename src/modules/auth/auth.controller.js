@@ -6,28 +6,26 @@ import { customAlphabet } from 'nanoid';
 ;
 
 export const register=async(req,res)=>{
-   const {userName,email,password} = req.body;
-   const user=await userModel.findOne({email});
-   if(user){
-    return res.status(409).json({message:'User already registered'})
-   }
-
+   const {userName,email,password,address,phoneNumber} = req.body;
    const hashPass= bcrypt.hashSync(password,parseInt(process.env.SALTROUND));
-   const newuser=await userModel.create({userName,email,password:hashPass});
+   const newuser=await userModel.create({userName,email,password:hashPass,address,phoneNumber});
    if(!newuser){
     return res.status(500).json({message:'error creating user'})
 }
-   const token=jwt.sign({email},process.env.confirmEmailsig,{expiresIn:60*1});
-   const refreshToken=jwt.sign({email},process.env.confirmEmailsig,{expiresIn:60*60*24});
-   const html=`<div>YaraShop</div>
-                <h2>Welcome to YaraSHop ${userName} </h2>
-                <a href='http://localhost:3000/auth/confirmEmail/${token}'>Confirm Email</a></br>
-                <a href='http://localhost:3000/auth/confirmEmail/${refreshToken}'>Resend Email</a>`
-
-
-                await sendEmail(email,'welcome message',html);
+   const token=jwt.sign({email},process.env.confirmEmailsig);
+ 
+    await sendEmail(email,'welcome message',userName,token);
    return res.status(201).json({message:'success',newuser})
 
+}
+
+export const confirmEmail=async(req, res) =>{
+    
+    const token=req.params.token;
+   
+    const decoded=jwt.verify(token,process.env.confirmEmailsig)
+    await userModel.findOneAndUpdate({email:decoded.email},{confirmEmail:true})
+    return res.status(201).json({message:'success'})
 }
 
 export const login=async(req,res)=>{
@@ -82,13 +80,3 @@ export const forgetPassword= async(req, res) => {
     await user.save();
     return res.status(200).json({message:'success'});
 }
-
-// export const confirmEmail=async(req,res)=>{
-//     const {token}=req.params;
-//     const decoded=jwt.verify(token,process.env.confirmEmailsig);
-//     const user=await userModel.updateOne({email:decoded.email},{confirmEmail:true},{new:true});
-//     if (user.modifiedCount >0){
-//         return res.status(201).redirect(process.env.FEURL)
-//     }
-   
-// }

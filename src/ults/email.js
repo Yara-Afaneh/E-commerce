@@ -1,7 +1,8 @@
 import nodemailer from'nodemailer'
+import { emailTemplate } from './emailtemplate.js';
 
 
-export async function sendEmail(to,subject,html){
+export async function sendEmail(to,subject,userName ='',token){
     const transporter = nodemailer.createTransport({
         service: "Gmail",
         host: "smtp.gmail.com",
@@ -20,7 +21,7 @@ export async function sendEmail(to,subject,html){
         from: 'YaraShop', // sender address
         to, // list of receivers
         subject, // Subject line
-        html, // html body
+        html:emailTemplate(to,userName,token) // html body
       });
     
       return info;

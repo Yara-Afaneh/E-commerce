@@ -18,12 +18,9 @@ const userSchema = new Schema({
   image:{
     type:Object,
   },
-  phone:{
-    type:String,
-
-  },
   address:{
     type:String,
+    required:true,
     
   },
   confirmEmail:{
@@ -47,6 +44,10 @@ const userSchema = new Schema({
   sendCode:{
     type:String,
     default:null,
+  },
+  phoneNumber:{
+    type:String,
+    required:true
   }
   },{
     timestamps:true,

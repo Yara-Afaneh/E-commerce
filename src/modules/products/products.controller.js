@@ -3,10 +3,12 @@ import categoriesModel from '../../../DB/models/categories.model.js';
 import productsModel from '../../../DB/models/products.model.js';
 import subcategoriesModel from './../../../DB/models/subcategories.js';
 import cloudinary from './../../ults/cloudinary.js';
+import { pagination } from '../../ults/pagination.js';
+import { json } from 'express';
 
 export const create =async(req,res)=>{
 
-   const {name,price,discount,categoryId,subcategoryId}=req.body;
+   const {name,unitPrice,discount,categoryId,subcategoryId}=req.body;
 
    const category= await categoriesModel.findById(categoryId)
 
@@ -21,7 +23,7 @@ export const create =async(req,res)=>{
   
 
     req.body.slug=slugify(name);
-    req.body.finalprice= price-((price*(discount || 0 ))/100)
+    req.body.finalprice= unitPrice-((unitPrice*(discount || 0 ))/100)
 
     const {secure_url,public_id}=await cloudinary.uploader.upload(req.files.mainImage[0].path,{
         folder:`${process.env.APPNAME}/products/${name}`
@@ -41,3 +43,37 @@ export const create =async(req,res)=>{
    
    return res.status(200).json({message:'success', product});
 }
+
+export const getall=async(req,res)=>{
+
+    const {skip,limit}=pagination(req.query.page,req.query.limit)
+    let queryObj={...req.query};
+    const execQuery=['page','limit','sort','search'];
+    execQuery.map((ele)=>{
+        delete queryObj[ele];
+    })
+
+    queryObj=JSON.stringify(queryObj);
+    queryObj=queryObj.replace(/gt|gte|lt|lte|in|nin|eq/g,match=>`$${match}`);
+    queryObj=JSON.parse(queryObj);
+    const mongooseQuery = productsModel.find(queryObj).skip(skip).limit(limit).populate({
+        path:'review',
+        populate:{
+            path:'userId',
+            select:'userName _id'
+        }
+        })
+
+    if(req.query.search){
+        mongooseQuery.find({
+            $or:[
+                {name:{$regex:req.query.search}},
+                {description:{$regex:req.query.search}}
+            ]
+        })
+    }
+    const count=await productsModel.estimatedDocumentCount();
+    mongooseQuery.select(req.query.fields)
+        const products=await mongooseQuery.sort(req.query.sort);
+    return res.status(200).json({message:'success',count,products});
+   }
