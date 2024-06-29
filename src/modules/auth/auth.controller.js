@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { sendEmail } from '../../ults/email.js';
 import { customAlphabet } from 'nanoid';
 import { Apperror } from '../../ults/Apperror.js';
+import XLSX from "xlsx";
 ;
 
 export const register=async(req,res,next)=>{
@@ -22,6 +23,38 @@ export const register=async(req,res,next)=>{
    
 
 }
+
+export const addUserExcel=async(req,res,next) => {
+    
+    const workbook=XLSX.readFile(req.file.path);
+   
+    const worksheet=workbook.Sheets[workbook.SheetNames[0]];
+    const users =XLSX.utils.sheet_to_json(worksheet);
+    const newUsers = users.map((user) => {
+        const { userName, email, password, address, phoneNumber } = user;
+        const hashPass = bcrypt.hashSync(password, parseInt(process.env.SALTROUND));
+        return {
+          userName,
+          password: hashPass,
+          email,
+          address,
+          phoneNumber
+        };
+      });
+  
+      const insertedUsers = await userModel.insertMany(newUsers);
+  
+      if (!insertedUsers) {
+        return res.status(500).json({ message: 'Error creating users' });
+      }
+  
+      insertedUsers.forEach((user) => {
+        const token = jwt.sign({ email: user.email }, process.env.confirmEmailsig);
+        sendEmail(user.email, 'Welcome message', user.userName, token);
+      });
+      return res.json({ message: 'Success' ,token});
+      }
+  
 
 export const confirmEmail=async(req, res,next) =>{
     

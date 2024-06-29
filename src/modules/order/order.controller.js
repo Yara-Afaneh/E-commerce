@@ -4,6 +4,7 @@ import productsModel from './../../../DB/models/products.model.js';
 import userModel from './../../../DB/models/user.model.js';
 import orderModel from './../../../DB/models/order.model.js';
 import Stripe from 'stripe';
+import  createInvoice  from "./../../ults/pdf.js";
 const stripe = new Stripe(process.env.stripeKey);
 
 
@@ -65,26 +66,26 @@ export const create = async (req, res) => {
   }
 
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data:{
-             currency:'USD',
-             unit_amount:subtotal-(subtotal*((req.body.copoun?.amount || 0))/100),
-             product_data:{
-              name:user.userName,
-             }
-          } ,
-          quantity: 1,
+    // const session = await stripe.checkout.sessions.create({
+    //   line_items: [
+    //     {
+    //       price_data:{
+    //          currency:'USD',
+    //          unit_amount:subtotal-(subtotal*((req.body.copoun?.amount || 0))/100),
+    //          product_data:{
+    //           name:user.userName,
+    //          }
+    //       } ,
+    //       quantity: 1,
 
-        },
-      ],
-      mode: 'payment',
-      success_url: `https://www.facebook.com`,
-      cancel_url: `https://www.youtube.com`,
-    });
+    //     },
+    //   ],
+    //   mode: 'payment',
+    //   success_url: `https://www.facebook.com`,
+    //   cancel_url: `https://www.youtube.com`,
+    // });
  
-return res.json(session);
+
  
   
   const order=await orderModel.create({
@@ -95,6 +96,23 @@ return res.json(session);
     phoneNumber:req.body.phoneNumber,
     updatedby:req.user._id,
   })
+
+  if(order){
+  
+
+const invoice = {
+  shipping: {
+    name: user.userName,
+    address:order.address,
+    phoneNumber:order.phoneNumber,
+  },
+  items:order.products,
+  subtotal:order.totalPrice,
+  invoice_nr:order._id
+};
+
+createInvoice(invoice, "invoice.pdf");
+  }
 
 
 

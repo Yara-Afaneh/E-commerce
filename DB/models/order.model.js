@@ -8,6 +8,7 @@ const orderSchema = new Schema({
     required:true,
    },
    products:[{
+      productname:{type:String},
       productId:{type:Types.ObjectId,ref:'products',required:true},
       quantity:{type:Number,default:1,required:true},
       unitPrice:{type:Number,required:true},

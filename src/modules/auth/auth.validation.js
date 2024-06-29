@@ -23,6 +23,15 @@ export const forgetPasswordSchema=joi.object({
     email:generalFeilds.email,
     password:generalFeilds.password,
     code:joi.string().required().length(4),
-}
-)
+})
+
+export const excelSchema = joi.object({
+    excel: joi.object({
+      mimetype: joi.string().valid(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ).required(),
+      size: joi.number().max(5000000).required() 
+    }).required()
+  });
 
