@@ -3,11 +3,13 @@ import copounModel from './../../../DB/models/copoun.model.js';
 import productsModel from './../../../DB/models/products.model.js';
 import userModel from './../../../DB/models/user.model.js';
 import orderModel from './../../../DB/models/order.model.js';
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.stripeKey);
 
 
 
 export const create = async (req, res) => {
-  const { copounName } = req.body;
+  const { copounName} = req.body;
   const cart = await cartModel.findOne({ userId: req.user._id });
   if (!cart || cart.products.length === 0) {
     return res.status(404).json({ message: "cart is empty" });
@@ -61,6 +63,30 @@ export const create = async (req, res) => {
   if(!req.body.address){
     req.body.address=user.address;
   }
+
+
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data:{
+             currency:'USD',
+             unit_amount:subtotal-(subtotal*((req.body.copoun?.amount || 0))/100),
+             product_data:{
+              name:user.userName,
+             }
+          } ,
+          quantity: 1,
+
+        },
+      ],
+      mode: 'payment',
+      success_url: `https://www.facebook.com`,
+      cancel_url: `https://www.youtube.com`,
+    });
+ 
+return res.json(session);
+ 
+  
   const order=await orderModel.create({
     userId:req.user._id,
     products:finalProductlist,
@@ -69,6 +95,8 @@ export const create = async (req, res) => {
     phoneNumber:req.body.phoneNumber,
     updatedby:req.user._id,
   })
+
+
 
   if(order){
     for(const product of req.body.product){

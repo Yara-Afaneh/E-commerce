@@ -6,8 +6,8 @@ const categoriesSchema = new Schema({
     type:String,
     unique:true,
     required:true,
-    min:4,
-    max:20
+    minLength:4,
+    maxLength:20
   },
   slug:{
      type:String,

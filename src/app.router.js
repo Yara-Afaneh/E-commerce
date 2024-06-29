@@ -31,5 +31,9 @@ const initApp=(app,express)=>{
 
     }); 
 
+    app.use((err,req,res,next)=>{
+        res.status(err.statuscode).json({message:err.message});
+    })
+
 }
 export default initApp;

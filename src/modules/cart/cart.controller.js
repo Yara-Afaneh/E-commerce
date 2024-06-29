@@ -1,7 +1,8 @@
 
 import cartModel from '../../../DB/models/cart.model.js';
+import { Apperror } from '../../ults/Apperror.js';
 
-export const create =async(req,res)=>{
+export const create =async(req,res,next)=>{
 
    const {productId}=req.body;
    const cart = await cartModel.findOne({userId: req.user._id});
@@ -10,22 +11,22 @@ export const create =async(req,res)=>{
         userId: req.user._id,
         products:{productId}
       })
-      return res.status(200).json({message:'success',cart:newcart})
+      return next(new Apperror('success',201));
    }
 
    for(let i=0;i<cart.products.length;i++){
     if(cart.products[i].productId == productId){
-        return res.status(404).json({message:'product already exist'})
+        return next(new Apperror('product already exist',404));
     }
    }
    cart.products.push({productId: productId});
    await cart.save();
-   return res.status(200).json({message:'success',cart:cart});
+   return next(new Apperror('success',201));
 
    
 }
 
-export const remove=async(req,res)=>{
+export const remove=async(req,res,next)=>{
     const productId = req.params.id;
 
     const cart =await cartModel.findOneAndUpdate({userId: req.user._id},{
@@ -35,15 +36,14 @@ export const remove=async(req,res)=>{
             }
         }
     },{new:true})
-
-    return res.status(200).json({message:'success',cart:cart})
+    return next(new Apperror('success',201));
 }
 
-export const clearCart=async(req,res)=>{
+export const clearCart=async(req,res,next)=>{
     const cart= await cartModel.findOneAndUpdate({userId: req.user._id},{products:[]},{new:true})
-    return res.status(200).json({message:'success'},cart)
+    return next(new Apperror('success',201));
 }
-export const updateQuantity=async(req,res)=>{
+export const updateQuantity=async(req,res,next)=>{
     const {quantity,operator}=req.body;
 
     const incr=(operator=='+')?quantity:-quantity;
@@ -55,5 +55,5 @@ export const updateQuantity=async(req,res)=>{
             new:true,
         })
 
-        return res.status(200).json({message:'success',cart})
+        return next(new Apperror('success',201));
 }

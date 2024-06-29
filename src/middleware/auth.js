@@ -1,5 +1,6 @@
 import userModel from "../../DB/models/user.model.js";
 import  jwt  from 'jsonwebtoken';
+import { Apperror } from "../ults/Apperror.js";
 
 export const roles={
     Admin:'admin',
@@ -14,21 +15,22 @@ export const auth=(accessrole=[])=>{
 
        
         if(!authorization?.startsWith(process.env.BEARERTOKEN)){
-            return res.status(400).json({message:'Invalid token'})
+        
+            return next(new Apperror('Invalid token',401))
         }
         const token=authorization.split(process.env.BEARERTOKEN)[1];     
         const decodedToken=jwt.verify(token,process.env.LOGINSIGN);
         if(!decodedToken){
-            return res.status(400).json({message:'Invalid token'})
+            return next(new Apperror('Invalid token',401))
         }
         const user=await userModel.findById(decodedToken.id).select('userName role');
        
         if(!user){
-            return res.status(400).json({message:'user not found'})
+            return next(new Apperror('user not found',409))
         }
 
         if(!accessrole.includes(user.role)){
-            return res.status(403).json({message:'user not auth'})
+            return next(new Apperror('user not auth ',403))
         }
 
       req.user=user;

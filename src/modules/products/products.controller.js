@@ -4,11 +4,12 @@ import productsModel from '../../../DB/models/products.model.js';
 import subcategoriesModel from './../../../DB/models/subcategories.js';
 import cloudinary from './../../ults/cloudinary.js';
 import { pagination } from '../../ults/pagination.js';
-import { json } from 'express';
 
-export const create =async(req,res)=>{
+
+export const create =async(req,res,next)=>{
 
    const {name,unitPrice,discount,categoryId,subcategoryId}=req.body;
+  
 
    const category= await categoriesModel.findById(categoryId)
 
@@ -30,13 +31,16 @@ export const create =async(req,res)=>{
     })
 
     req.body.mainImage={secure_url,public_id};
+   
     req.body.subImage=[];
+    if(req.files.subImage){
     for(const file of req.files.subImage){
         const {secure_url,public_id}=await cloudinary.uploader.upload(file.path,{
             folder:`${process.env.APPNAME}/products/${name}/subImages`
         })
         req.body.subImage.push={secure_url,public_id}
-    }
+    }}
+    
     
     const product =await productsModel.create(req.body)
     
@@ -44,7 +48,7 @@ export const create =async(req,res)=>{
    return res.status(200).json({message:'success', product});
 }
 
-export const getall=async(req,res)=>{
+export const getall=async(req,res,next)=>{
 
     const {skip,limit}=pagination(req.query.page,req.query.limit)
     let queryObj={...req.query};
@@ -74,6 +78,13 @@ export const getall=async(req,res)=>{
     }
     const count=await productsModel.estimatedDocumentCount();
     mongooseQuery.select(req.query.fields)
-        const products=await mongooseQuery.sort(req.query.sort);
+        let products=await mongooseQuery.sort(req.query.sort);
+        products=products.map(product =>{
+            return {
+                ...product.toObject(),
+                mainImage:product.mainImage.secure_url,
+                subImage:product.subImage.map(img=>img.secure_url)
+            }
+        })
     return res.status(200).json({message:'success',count,products});
    }

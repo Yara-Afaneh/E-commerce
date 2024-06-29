@@ -4,7 +4,7 @@ import slugify from 'slugify';
 
 
 
-export const create=async(req,res)=>{
+export const create=async(req,res,next)=>{
  
     const name=req.body.name.toLowerCase();
     if(await categoriesModel.findOne({name})){
@@ -18,6 +18,8 @@ export const create=async(req,res)=>{
     req.body.image={secure_url,public_id};
     req.body.createdBy=req.user._id;
     req.body.updatedBy=req.user._id;
+
+    
 
     const category=await categoriesModel.create(req.body)
    
@@ -38,16 +40,16 @@ export const getall=async(req,res,next)=>{
 ]);
     return res.status(200).json(categories);
 }
-export const getactive=async(req,res)=>{
+export const getactive=async(req,res,next)=>{
     const categories=await categoriesModel.find({status:'active'}).select('name image');
     return res.status(200).json(categories);
 }
-export const getDetails=async(req,res)=>{
+export const getDetails=async(req,res,next)=>{
     const categoryDetails=await categoriesModel.findById(req.params.id);
     return res.status(200).json({message:'success',categoryDetails})
 };
 
-export const update=async(req,res)=>{
+export const update=async(req,res,next)=>{
     
     const category=await categoriesModel.findById(req.params.id);
    
